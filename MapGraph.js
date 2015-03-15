@@ -1,21 +1,29 @@
-function MapNode(name, x, y, index) {
+function MapArea(index, traffic) {
+    this.index = index;
+    this.trafficCost = traffic;
+}
+
+function MapNode(name, x, y, index, areas, invisible) {
     this.name = name;
     this.x = x;
     this.y = y;
     this.index = index;
+    this.areas = areas;         //Indices of areas that the node is part of
+    this.invisible = invisible; //Is this an endpoint, used for routing instead of an endpoint.
 
     //Used for dijkstra's algorithm
     this.from = null;       //Node that we came from in dijkstra's algorithm
     this.pathCost = 0;      //The cost that it took to reach this node.
 
     this.copy = function () {
-        return new MapNode(this.name, this.x, this.y, this.index);
+        return new MapNode(this.name, this.x, this.y, this.index, this.areas, this.invisible);
     }
 }
 
-function MapRoad(destIndex, cost) {
+function MapRoad(destIndex, cost, invisible) {
     this.destIndex = destIndex;
     this.cost = cost;
+    this.invisible = invisible;
 }
 
 //Used for the path
@@ -24,22 +32,41 @@ function Point(x, y) {
     this.y = y;
 }
 
-function buildNodeList(mapFileContents) {
-    var nodes = []
+function buildAreaList(mapFileContents) {
+    var areas = [];
     var lines = mapFileContents.replace("\r", "").split("\n");
 
-    var nodeCount = parseInt(lines[0]);
-    
-    var index = 0;
-    for (i = 1; i < nodeCount * 2; i += 2) {
-        var name = lines[i];
+    var areaCount = parseInt(lines[0]);
+    var offset = 1;
 
-        var coords = lines[i + 1].split(" ");
+    for (var i = 0; i < areaCount; i += 1)
+        areas.push(parseInt(lines[i + offset]));
+}
+
+function buildNodeList(mapFileContents) {
+    var nodes = [];
+    var lines = mapFileContents.replace("\r", "").split("\n");
+
+    var areaCount = parseInt(lines[0]);
+    var nodeCount = parseInt(lines[areaCount + 1]);
+    var offset = areaCount + 2;
+    
+    for (i = 0; i < nodeCount; i += 1) {
+        var index = i * 4 + offset;
+
+        var name = lines[index];
+
+        var coords = lines[index + 1].split(" ");
         var x = parseInt(coords[0]);
         var y = parseInt(coords[1]);
 
-        nodes.push(new MapNode(name, x, y, index));
-        index += 1;
+        var areas = [];
+        var areaStrings = lines[index + 2].split(" ");
+        for (j = 0; j < areaStrings.length; j += 1) areas.push(parseInt(areaStrings[j]));
+
+        var invisible = lines[index + 3].search("I") > -1;
+
+        nodes.push(new MapNode(name, x, y, i, areas, invisible));
     }
 
     return nodes;
@@ -47,22 +74,26 @@ function buildNodeList(mapFileContents) {
 
 function buildAdjacencyList(mapFileContents) {
     var lines = mapFileContents.replace("\r", "").split("\n");
-    var nodeCount = parseInt(lines[0]);
 
-    var adjacencyList = []
+    var areaCount = parseInt(lines[0]);
+    var nodeCount = parseInt(lines[areaCount + 1]);
 
-    //Skip the lines with the nodes and start directly at the adjacency information
-    var startIndex = nodeCount * 2 + 1;
-    var endIndex = startIndex + nodeCount - 1;
+    var offset = areaCount + 2 + nodeCount * 4;
 
-    for (i = startIndex; i <= endIndex; i++) {
-        var tokens = lines[i].split(" ");
-        var roads = []
-        for (j = 0; j < tokens.length; j += 2) {
+    var adjacencyList = [];
+
+    for (i = 0; i < nodeCount; i++) {
+
+        var tokens = lines[i + offset].split(" ");
+        var roads = [];
+
+        for (j = 0; j < tokens.length; j += 3) {
             var destIndex = parseInt(tokens[j]);
             var cost = parseInt(tokens[j + 1]);
-            roads.push(new MapRoad(destIndex, cost));
+            var invisible = tokens[j + 2].search("I") > -1;
+            roads.push(new MapRoad(destIndex, cost, invisible));
         }
+
         adjacencyList.push(roads);
     }
 
@@ -72,7 +103,7 @@ function buildAdjacencyList(mapFileContents) {
 //Used for dijkstra's algorithm
 function PriorityQueue(comparisonFunction) {
     this.comparison = comparisonFunction;
-    this.data = []
+    this.data = [];
 
     this.push = function (val) {
         this.data.push(val);
