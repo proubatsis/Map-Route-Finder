@@ -6,8 +6,11 @@ function MapNode(name, x, y, index) {
 
     //Used for dijkstra's algorithm
     this.from = null;       //Node that we came from in dijkstra's algorithm
-    this.visited = false;   //Has this node already been visited?
     this.pathCost = 0;      //The cost that it took to reach this node.
+
+    this.copy = function () {
+        return new MapNode(this.name, this.x, this.y, this.index);
+    }
 }
 
 function MapRoad(destIndex, cost) {
@@ -89,12 +92,7 @@ function Map(mapFileContents) {
     this.nodes = buildNodeList(mapFileContents);
     this.adjacencies = buildAdjacencyList(mapFileContents);
 
-    //Shortest path after dijkstra's algorithm is run
-    this.path = []
-
     this.reset = function () {
-        this.path = []
-
         for (i = 0; i < this.nodes.length; i++) {
             this.nodes[i].visited = false;
             this.nodes[i].from = null;
@@ -122,13 +120,17 @@ function Map(mapFileContents) {
 
         if (a < 0 || b < 0) return null;
 
+        var visited = [];
+        for (var i = 0; i < this.nodes.length; i++)
+            visited.push(false);
+
         //Run dijkstra's algorithm to find the shortest path to the destination
         var queue = new PriorityQueue(function (a, b) { return b.pathCost - a.pathCost; });
         queue.push(this.nodes[a]);
 
         while (!queue.isEmpty()) {
             var n = queue.pop();
-            n.visited = true;
+            visited[n.index] = true;
             
             if (n.index == b) {
                 endNode = n;
@@ -137,8 +139,8 @@ function Map(mapFileContents) {
 
             for (i = 0; i < this.adjacencies[n.index].length; i++) {
                 var index = this.adjacencies[n.index][i].destIndex;
-                var nextNode = this.nodes[index];
-                if (!nextNode.visited) {
+                var nextNode = this.nodes[index].copy();
+                if (!visited[index]) {
                     nextNode.pathCost = n.pathCost + this.adjacencies[n.index][i].cost;
                     nextNode.from = n;
                     queue.push(nextNode);
@@ -151,14 +153,14 @@ function Map(mapFileContents) {
         //Retrieve the path in reverse order
         var n = endNode;
 
+        var path = [];
         while (n != null) {
-            this.path.push(new Point(n.x, n.y));
+            path.push(new Point(n.x, n.y));
             n = n.from;
         }
 
-        p = this.path;
         this.reset();
-        return p;
+        return path;
     }
 
 }
