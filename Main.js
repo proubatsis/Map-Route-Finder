@@ -24,6 +24,9 @@ context.drawImage(img, 0, 0);
 
 function addMapPointsToSelection() {
     for (var i = 0; i < map.nodes.length; i++) {
+        //Don't add invisible nodes
+        if (map.nodes[i].invisible) continue;
+
         sourceSelection.innerHTML += "<option value=\"" + map.nodes[i].name + "\">" + map.nodes[i].name + "</option>";
         destinationSelection.innerHTML += "<option value=\"" + map.nodes[i].name + "\">" + map.nodes[i].name + "</option>";
     }
