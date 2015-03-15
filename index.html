@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Map Route Finder</title>
+    <script src="MapGraph.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <canvas id="mapCanvas">
+        Your browser does not support the canvas element!
+    </canvas>
+
+    <!--Holds the image for javascript to use-->
+    <img style="display:none;" src="map.png" id="mapImage" />
+
+    <!--Selections are populated by javascript code-->
+    <select id="sourcePoint"></select>
+    <select id="destinationPoint"></select>
+
+    <input type="button" value="Find Path!" onclick="drawSelectedPath();"/>
+
+    <script src="Main.js" type="text/javascript"></script>
+
+</body>
+</html>
