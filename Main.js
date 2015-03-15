@@ -46,12 +46,38 @@ function drawLine(x1, y1, x2, y2, thickness, color) {
     context.stroke();
 }
 
+function fillCircle(cx, cy, radius, color) {
+    context.fillStyle = color;
+
+    context.beginPath();
+    context.arc(cx, cy, radius, 0, 2 * Math.PI);
+    context.fill();
+}
+
+function drawText(str, x, y) {
+    context.font = "25px Arial";
+    context.fillStyle = "#000";
+    context.fillText(str, x - 12, y + 12);
+}
+
 function drawPath(aName, bName) {
     context.drawImage(img, 0, 0);
     var path = map.getPath(aName, bName);
 
+    var jumpBuffer = [];
+
     for (i = 0; i < path.length; i++) {
-        drawLine(path[i].ax, path[i].ay, path[i].bx, path[i].by, 5, "#00FF00");
+        if (!path[i].invisible) drawLine(path[i].ax, path[i].ay, path[i].bx, path[i].by, 5, "#00FF00");
+        else jumpBuffer.push(path[i]);
+    }
+
+    for (i = 0; i < jumpBuffer.length; i++) {
+        fillCircle(jumpBuffer[i].ax, jumpBuffer[i].ay, 10, "#FF0000");
+        fillCircle(jumpBuffer[i].bx, jumpBuffer[i].by, 10, "#FF0000");
+
+        var jumpId = (i + 1).toString();
+        drawText(jumpId, jumpBuffer[i].ax, jumpBuffer[i].ay);
+        drawText(jumpId, jumpBuffer[i].bx, jumpBuffer[i].by);
     }
 }
 
