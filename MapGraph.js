@@ -141,7 +141,7 @@ function Map(mapFileContents) {
                 var index = this.adjacencies[n.index][i].destIndex;
                 var nextNode = this.nodes[index].copy();
                 if (!visited[index]) {
-                    nextNode.pathCost = n.pathCost + this.adjacencies[n.index][i].cost;
+                    nextNode.pathCost = n.pathCost + this.adjacencies[n.index][i].cost + 1;
                     nextNode.from = n;
                     queue.push(nextNode);
                 }
