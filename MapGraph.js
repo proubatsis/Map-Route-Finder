@@ -26,10 +26,13 @@ function MapRoad(destIndex, cost, invisible) {
     this.invisible = invisible;
 }
 
-//Used for the path
-function Point(x, y) {
-    this.x = x;
-    this.y = y;
+function PathLink(ax, ay, bx, by, invisible) {
+    this.ax = ax;
+    this.ay = ay;
+    this.bx = bx;
+    this.by = by;
+
+    this.invisible = invisible;
 }
 
 function buildAreaList(mapFileContents) {
@@ -98,6 +101,16 @@ function buildAdjacencyList(mapFileContents) {
     }
 
     return adjacencyList;
+}
+
+function getAdjacency(indexA, indexB, adjacencies) {
+    roads = adjacencies[indexA];
+
+    for (var i = 0; i < roads.length; i += 1) {
+        if (roads[i].destIndex == indexB) return roads[i];
+    }
+
+    return null;
 }
 
 //Used for dijkstra's algorithm
@@ -184,10 +197,19 @@ function Map(mapFileContents) {
         //Retrieve the path in reverse order
         var n = endNode;
 
-        var path = [];
+        var pathNodes = [];
         while (n != null) {
-            path.push(new Point(n.x, n.y));
+            pathNodes.unshift(n);
             n = n.from;
+        }
+
+        var path = [];
+        for (var i = 1; i < pathNodes.length; i += 1) {
+            var nodeA = pathNodes[i - 1];
+            var nodeB = pathNodes[i];
+
+            var link = new PathLink(nodeA.x, nodeA.y, nodeB.x, nodeB.y, getAdjacency(nodeA.index, nodeB.index, this.adjacencies).invisible);
+            path.push(link);
         }
 
         this.reset();

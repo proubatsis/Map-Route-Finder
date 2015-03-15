@@ -32,7 +32,7 @@ function addMapPointsToSelection() {
     }
 }
 
-function drawLine(p1, p2, thickness, color) {
+function drawLine(x1, y1, x2, y2, thickness, color) {
     context.strokeStyle = color;
 
     context.beginPath();
@@ -40,8 +40,8 @@ function drawLine(p1, p2, thickness, color) {
     context.lineWidth = thickness;
     context.lineCap = "butt";
 
-    context.moveTo(p1.x, p1.y);
-    context.lineTo(p2.x, p2.y);
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
 
     context.stroke();
 }
@@ -50,8 +50,8 @@ function drawPath(aName, bName) {
     context.drawImage(img, 0, 0);
     var path = map.getPath(aName, bName);
 
-    for (i = 1; i < path.length; i++) {
-        drawLine(path[i - 1], path[i], 5, "#00FF00");
+    for (i = 0; i < path.length; i++) {
+        drawLine(path[i].ax, path[i].ay, path[i].bx, path[i].by, 5, "#00FF00");
     }
 }
 
