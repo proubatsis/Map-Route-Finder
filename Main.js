@@ -3,32 +3,6 @@
     Description: Loads the required data. Draws the paths on a canvas.
 */
 
-//Loads the map data
-function getMapData() {
-    request = new XMLHttpRequest();
-    request.open("GET", "map.txt", false);
-    request.send();
-
-    return request.responseText;
-}
-
-//Initialize the various elements.
-canvas = document.getElementById("mapCanvas");
-context = canvas.getContext("2d");
-
-img = document.getElementById("mapImage");
-mapData = getMapData();
-
-sourceSelection = document.getElementById("sourcePoint");
-destinationSelection = document.getElementById("destinationPoint");
-
-map = new Map(mapData);
-
-canvas.width = img.width;
-canvas.height = img.height;
-
-context.drawImage(img, 0, 0);
-
 //Add the nodes to the selection lists as possible sources and destinations
 function addMapPointsToSelection() {
     for (var i = 0; i < map.nodes.length; i++) {
@@ -102,4 +76,34 @@ function drawSelectedPath() {
     drawPath(a, b);
 }
 
-addMapPointsToSelection();
+//Initialize the various elements.
+canvas = document.getElementById("mapCanvas");
+context = canvas.getContext("2d");
+
+img = document.getElementById("mapImage");
+
+sourceSelection = document.getElementById("sourcePoint");
+destinationSelection = document.getElementById("destinationPoint");
+
+canvas.width = img.width;
+canvas.height = img.height;
+
+context.drawImage(img, 0, 0);
+
+//Map data
+var map;
+var mapData;
+
+//Load map data
+request = new XMLHttpRequest();
+request.onreadystatechange = function () {
+    if (request.readyState == 4 && request.status == 200) {
+        mapData = request.responseText;
+        map = new Map(mapData);
+        addMapPointsToSelection();
+    }
+}
+
+request.open("GET", "map.txt", true);
+request.send();
+
