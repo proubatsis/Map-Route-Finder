@@ -1,3 +1,9 @@
+/*
+    Created by Panagiotis Roubatsis
+    Description: Loads the required data. Draws the paths on a canvas.
+*/
+
+//Loads the map data
 function getMapData() {
     request = new XMLHttpRequest();
     request.open("GET", "map.txt", false);
@@ -6,6 +12,7 @@ function getMapData() {
     return request.responseText;
 }
 
+//Initialize the various elements.
 canvas = document.getElementById("mapCanvas");
 context = canvas.getContext("2d");
 
@@ -22,6 +29,7 @@ canvas.height = img.height;
 
 context.drawImage(img, 0, 0);
 
+//Add the nodes to the selection lists as possible sources and destinations
 function addMapPointsToSelection() {
     for (var i = 0; i < map.nodes.length; i++) {
         //Don't add invisible nodes
@@ -32,6 +40,7 @@ function addMapPointsToSelection() {
     }
 }
 
+//Draw a line on the canvas
 function drawLine(x1, y1, x2, y2, thickness, color) {
     context.strokeStyle = color;
 
@@ -46,6 +55,7 @@ function drawLine(x1, y1, x2, y2, thickness, color) {
     context.stroke();
 }
 
+//Draw a filled circle on the canvas
 function fillCircle(cx, cy, radius, color) {
     context.fillStyle = color;
 
@@ -54,12 +64,14 @@ function fillCircle(cx, cy, radius, color) {
     context.fill();
 }
 
+//Draw text on the canvas
 function drawText(str, x, y) {
     context.font = "25px Arial";
     context.fillStyle = "#000";
     context.fillText(str, x - 12, y + 12);
 }
 
+//Draw the map's image to the canvas and then overlay the path.
 function drawPath(aName, bName) {
     context.drawImage(img, 0, 0);
     var path = map.getPath(aName, bName);
@@ -81,6 +93,7 @@ function drawPath(aName, bName) {
     }
 }
 
+//Button callback, it gets the selected nodes and calls drawPath().
 function drawSelectedPath() {
     var a = sourceSelection.value;
     var b = destinationSelection.value;

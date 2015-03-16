@@ -1,8 +1,19 @@
+/*
+    Created by Panagiotis Roubatsis
+    Description: Contains the functionanility to decode and use the map data file.
+*/
+
+//Nodes can belong to areas. Areas define certain
+//characteristics that a group of nodes share. A
+//node can belong to multiple areas. The rules of the
+//area only apply if a source and destination node are in
+//the same area when running dijkstra's algorithm.
 function MapArea(index, traffic) {
     this.index = index;
     this.trafficCost = traffic;
 }
 
+//A point on the map (A vertex on the graph).
 function MapNode(name, x, y, index, areas, invisible) {
     this.name = name;
     this.x = x;
@@ -20,12 +31,14 @@ function MapNode(name, x, y, index, areas, invisible) {
     }
 }
 
+//A road/route on the map (An edge on the graph).
 function MapRoad(destIndex, cost, invisible) {
     this.destIndex = destIndex;
     this.cost = cost;
     this.invisible = invisible;
 }
 
+//Used to draw the route.
 function PathLink(ax, ay, bx, by, invisible) {
     this.ax = ax;
     this.ay = ay;
@@ -35,6 +48,8 @@ function PathLink(ax, ay, bx, by, invisible) {
     this.invisible = invisible;
 }
 
+//Loads the area data from the map's data file.
+//Returns an array of MapArea objects.
 function buildAreaList(mapFileContents) {
     var areas = [];
     var lines = mapFileContents.replace("\r", "").split("\n");
@@ -48,6 +63,8 @@ function buildAreaList(mapFileContents) {
     return areas;
 }
 
+//Loads the node data from the map's data file.
+//Returns an array of MapNode objects.
 function buildNodeList(mapFileContents) {
     var nodes = [];
     var lines = mapFileContents.replace("\r", "").split("\n");
@@ -77,6 +94,8 @@ function buildNodeList(mapFileContents) {
     return nodes;
 }
 
+//Loads the road data from the map's data file into an adjacency list.
+//Returns a 2d array of MapRoad objects.
 function buildAdjacencyList(mapFileContents) {
     var lines = mapFileContents.replace("\r", "").split("\n");
 
@@ -105,6 +124,8 @@ function buildAdjacencyList(mapFileContents) {
     return adjacencyList;
 }
 
+//Returns a MapRoad object for an adjacency between two nodes.
+//Returns null if the nodes are not connected.
 function getAdjacency(indexA, indexB, adjacencies) {
     roads = adjacencies[indexA];
 
@@ -134,11 +155,14 @@ function PriorityQueue(comparisonFunction) {
     }
 }
 
+//Provides the necessary functionality for interpreting
+//the data and providing a path from the start to end nodes.
 function Map(mapFileContents) {
     this.areas = buildAreaList(mapFileContents);
     this.nodes = buildNodeList(mapFileContents);
     this.adjacencies = buildAdjacencyList(mapFileContents);
 
+    //Resets the data that is used for pathfinding.
     this.reset = function () {
         for (i = 0; i < this.nodes.length; i++) {
             this.nodes[i].visited = false;
@@ -147,6 +171,8 @@ function Map(mapFileContents) {
         }
     }
 
+    //Search for a given node by name and return its index.
+    //If no node with the given name is found then -1 is returned.
     this.findIndexFromName = function (name) {
         var index = -1;
 
@@ -160,6 +186,8 @@ function Map(mapFileContents) {
         return index;
     }
 
+    //Returns the traffic value between two nodes if they share a common area.
+    //If they are not in the same area then return 0.
     this.getTrafficBetweenNodes = function (a, b) {
         if (a.areas.length == 0 || b.areas.length == 0) return 0;
 
@@ -170,16 +198,20 @@ function Map(mapFileContents) {
         return 0;
     }
 
+    //Find a path using dijkstra's algorithm. Returns an array of PathLink objects.
     this.getPath = function (aName, bName, accountForTraffic) {
         //Default is false if no parameter is passed
         accountForTraffic = typeof accountForTraffic == "undefined" ? false : accountForTraffic;
 
+        //Get indices for the start and end nodes
         var a = this.findIndexFromName(aName);
         var b = this.findIndexFromName(bName);
         var endNode;
 
+        //If either node does not exist then there is no path.
         if (a < 0 || b < 0) return null;
 
+        //Keep track of which nodes have been visited by the pathfinding code
         var visited = [];
         for (var i = 0; i < this.nodes.length; i++)
             visited.push(false);
@@ -192,15 +224,19 @@ function Map(mapFileContents) {
             var n = queue.pop();
             visited[n.index] = true;
             
+            //If the destination has been reached then stop looking for a path
+            //because it has been found.
             if (n.index == b) {
                 endNode = n;
                 break;
             }
 
+            //Enqueue all unvisited adjacent nodes
             for (i = 0; i < this.adjacencies[n.index].length; i++) {
                 var index = this.adjacencies[n.index][i].destIndex;
                 var nextNode = this.nodes[index].copy();
                 if (!visited[index]) {
+                    //Determine the cumulative cost of the path up to this point
                     nextNode.pathCost = n.pathCost + this.adjacencies[n.index][i].cost + 1;
                     if (accountForTraffic) nextNode.pathCost += this.getTrafficBetweenNodes(n, nextNode);
 
@@ -210,14 +246,15 @@ function Map(mapFileContents) {
             }
         }
 
+        //If the destination has not been reached there is no path.
         if (endNode == null) return null;
 
-        //Retrieve the path in reverse order
+        //Retrieve the path
         var n = endNode;
 
         var pathNodes = [];
         while (n != null) {
-            pathNodes.unshift(n);
+            pathNodes.unshift(n);   //Add to the start of the array
             n = n.from;
         }
 
