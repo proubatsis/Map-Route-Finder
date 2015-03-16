@@ -43,7 +43,9 @@ function buildAreaList(mapFileContents) {
     var offset = 1;
 
     for (var i = 0; i < areaCount; i += 1)
-        areas.push(parseInt(lines[i + offset]));
+        areas.push(new MapArea(i, parseInt(lines[i + offset])));
+
+    return areas;
 }
 
 function buildNodeList(mapFileContents) {
@@ -133,6 +135,7 @@ function PriorityQueue(comparisonFunction) {
 }
 
 function Map(mapFileContents) {
+    this.areas = buildAreaList(mapFileContents);
     this.nodes = buildNodeList(mapFileContents);
     this.adjacencies = buildAdjacencyList(mapFileContents);
 
@@ -157,7 +160,20 @@ function Map(mapFileContents) {
         return index;
     }
 
-    this.getPath = function (aName, bName) {
+    this.getTrafficBetweenNodes = function (a, b) {
+        if (a.areas.length == 0 || b.areas.length == 0) return 0;
+
+        for (var i = 0; i < a.areas.length; i++) {
+            if (b.areas.indexOf(a.areas[i]) > -1) return this.areas[a.areas[i]].trafficCost;
+        }
+
+        return 0;
+    }
+
+    this.getPath = function (aName, bName, accountForTraffic) {
+        //Default is false if no parameter is passed
+        accountForTraffic = typeof accountForTraffic == "undefined" ? false : accountForTraffic;
+
         var a = this.findIndexFromName(aName);
         var b = this.findIndexFromName(bName);
         var endNode;
@@ -186,6 +202,8 @@ function Map(mapFileContents) {
                 var nextNode = this.nodes[index].copy();
                 if (!visited[index]) {
                     nextNode.pathCost = n.pathCost + this.adjacencies[n.index][i].cost + 1;
+                    if (accountForTraffic) nextNode.pathCost += this.getTrafficBetweenNodes(n, nextNode);
+
                     nextNode.from = n;
                     queue.push(nextNode);
                 }
