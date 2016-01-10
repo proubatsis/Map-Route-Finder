@@ -122,6 +122,6 @@ request.onreadystatechange = function () {
     }
 }
 
-request.open("GET", "map.txt", true);
+request.open("GET", "map.json", true);
 request.send();
 

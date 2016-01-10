@@ -50,7 +50,7 @@ function MapNode(name, x, y, index, areas, invisible) {
 }
 
 //A road/route on the map (An edge on the graph).
-function MapRoad(destIndex, cost, invisible) {
+function MapAdjacency(destIndex, cost, invisible) {
     this.destIndex = destIndex;
     this.cost = cost;
     this.invisible = invisible;
@@ -66,83 +66,7 @@ function PathLink(ax, ay, bx, by, invisible) {
     this.invisible = invisible;
 }
 
-//Loads the area data from the map's data file.
-//Returns an array of MapArea objects.
-function buildAreaList(mapFileContents) {
-    var areas = [];
-    var lines = mapFileContents.replace("\r", "").split("\n");
-
-    var areaCount = parseInt(lines[0]);
-    var offset = 1;
-
-    for (var i = 0; i < areaCount; i += 1)
-        areas.push(new MapArea(i, parseInt(lines[i + offset])));
-
-    return areas;
-}
-
-//Loads the node data from the map's data file.
-//Returns an array of MapNode objects.
-function buildNodeList(mapFileContents) {
-    var nodes = [];
-    var lines = mapFileContents.replace("\r", "").split("\n");
-
-    var areaCount = parseInt(lines[0]);
-    var nodeCount = parseInt(lines[areaCount + 1]);
-    var offset = areaCount + 2;
-    
-    for (i = 0; i < nodeCount; i += 1) {
-        var index = i * 4 + offset;
-
-        var name = lines[index];
-
-        var coords = lines[index + 1].split(" ");
-        var x = parseInt(coords[0]);
-        var y = parseInt(coords[1]);
-
-        var areas = [];
-        var areaStrings = lines[index + 2].split(" ");
-        for (j = 0; j < areaStrings.length; j += 1) areas.push(parseInt(areaStrings[j]));
-
-        var invisible = lines[index + 3].search("I") > -1;
-
-        nodes.push(new MapNode(name, x, y, i, areas, invisible));
-    }
-
-    return nodes;
-}
-
-//Loads the road data from the map's data file into an adjacency list.
-//Returns a 2d array of MapRoad objects.
-function buildAdjacencyList(mapFileContents) {
-    var lines = mapFileContents.replace("\r", "").split("\n");
-
-    var areaCount = parseInt(lines[0]);
-    var nodeCount = parseInt(lines[areaCount + 1]);
-
-    var offset = areaCount + 2 + nodeCount * 4;
-
-    var adjacencyList = [];
-
-    for (i = 0; i < nodeCount; i++) {
-
-        var tokens = lines[i + offset].split(" ");
-        var roads = [];
-
-        for (j = 0; j < tokens.length; j += 3) {
-            var destIndex = parseInt(tokens[j]);
-            var cost = parseInt(tokens[j + 1]);
-            var invisible = tokens[j + 2].search("I") > -1;
-            roads.push(new MapRoad(destIndex, cost, invisible));
-        }
-
-        adjacencyList.push(roads);
-    }
-
-    return adjacencyList;
-}
-
-//Returns a MapRoad object for an adjacency between two nodes.
+//Returns a MapAdjacency object for an adjacency between two nodes.
 //Returns null if the nodes are not connected.
 function getAdjacency(indexA, indexB, adjacencies) {
     roads = adjacencies[indexA];
@@ -176,9 +100,17 @@ function PriorityQueue(comparisonFunction) {
 //Provides the necessary functionality for interpreting
 //the data and providing a path from the start to end nodes.
 function Map(mapFileContents) {
-    this.areas = buildAreaList(mapFileContents);
-    this.nodes = buildNodeList(mapFileContents);
-    this.adjacencies = buildAdjacencyList(mapFileContents);
+    data = JSON.parse(mapFileContents);
+    this.areas = data.areas;
+    this.adjacencies = data.adjacencies;
+    nodes_data = data.nodes;
+
+    //Take the json data and create map objects so that it has the copy() method and
+    //from and path_cost properties.
+    this.nodes = nodes_data.map(function(node)
+    {
+        return new MapNode(node.name, node.x, node.y, node.index, node.areas, node.invisible);
+    });
 
     //Resets the data that is used for pathfinding.
     this.reset = function () {
